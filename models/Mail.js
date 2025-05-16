@@ -7,7 +7,7 @@ const mailSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ["pending", "canceled"],
+        enum: ["pending", "cancelled"],
         default: "pending"
     },
     content: {
