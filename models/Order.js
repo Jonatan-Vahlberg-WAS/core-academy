@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const Course = require("./Course");
+const Mail = require("./Mail")
 const orderSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
@@ -83,9 +84,34 @@ async function preSaveHook(order) {
 }
 
 orderSchema.pre("save", async function (next) {
+  const order = this
   await preSaveHook(this);
+
+  if(order.isNew) {
+    if(order.status === "pending") {
+      await Mail.create({
+        subject: "Order Pending",
+        status: "pending",
+        content: `Order ${order._id} is being handled`,
+        order: order._id,
+        user: order.user,
+      }) 
+    }
+  }
+
+  if(!order.isNew && order.status === "cancelled") {
+    await Mail.create({
+      subject: "Order Cancelled",
+      status: "cancelled",
+      content: `Order ${order._id} has been cancelled you should receive a full refund in the coming days`,
+      order: order._id,
+      user: order.user,
+    }) 
+  }
+
   next();
 });
+
 
 orderSchema.post("insertMany", async function (docs) {
   try {

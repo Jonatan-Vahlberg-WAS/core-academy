@@ -1,4 +1,5 @@
 const Order = require("../../models/Order");
+const Mail = require("../../models/Mail")
 const OrderFactory = require("../factories/orderFactory");
 const UserFactory = require("../factories/userFactory");
 const CourseFactory = require("../factories/courseFactory");
@@ -176,3 +177,80 @@ describe("Order Model - Insert Many Hook", () => {
     expect(_orders[0].totalPrice).toBe(courses.reduce((acc, course) => acc + course.price, 0));
   });
 });
+
+
+describe("Order Model - Mail Hook", () => {
+  it("should create a mail when an order is created", async () => {
+    const user = await UserFactory.create();
+    const courses = await CourseFactory.createMany(1);
+
+    const orderData = OrderFactory.generate({
+      user: user._id,
+      courses: courses.map((course) => course._id),
+      status: "pending"
+    });
+
+    const order = await Order.create(orderData);
+
+    const mail = await Mail.findOne(
+      {
+        order: order._id,
+        status: "pending"
+      }
+    )
+
+    expect(mail).not.toBe(null)
+  })
+
+  it("should not create a mail when an order is being updated/completed", async function() {
+    const user = await UserFactory.create();
+    const courses = await CourseFactory.createMany(1);
+
+    const orderData = OrderFactory.generate({
+      user: user._id,
+      courses: courses.map((course) => course._id),
+      status: "pending"
+    });
+
+    const order = await Order.create(orderData);
+
+    order.status == "completed"
+    await order.save()
+
+    const orderMails = await Mail.find({
+      order: order._id
+    })
+
+    expect(orderMails.length).toBe(1)
+  })
+
+  it("should create a mail with status 'cancelled' if order is cancelled", async function () {
+    const user = await UserFactory.create();
+    const courses = await CourseFactory.createMany(1);
+
+    const orderData = OrderFactory.generate({
+      user: user._id,
+      courses: courses.map((course) => course._id),
+      status: "pending"
+    });
+
+    const order = await Order.create(orderData);
+
+    order.status = "cancelled"
+    await order.save()
+
+    const mail = await Mail.findOne(
+      {
+        order: order._id,
+        status: "cancelled"
+      }
+    )
+
+    expect(mail).not.toBe(null)
+  })
+})
+
+
+    
+
+
