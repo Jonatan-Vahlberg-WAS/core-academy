@@ -1,5 +1,5 @@
-const users = require("./users");
-const courses = require("./courses");
+const users = require("./users.js");
+const courses = require("./courses.js");
 const { faker } = require("@faker-js/faker");
 
 

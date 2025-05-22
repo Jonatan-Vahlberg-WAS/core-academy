@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const Course = require("./Course");
+const Mail = require("./Mail");
 const orderSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
@@ -83,7 +84,25 @@ async function preSaveHook(order) {
 }
 
 orderSchema.pre("save", async function (next) {
+  const order = this;
   await preSaveHook(this);
+
+  if (order.isNew) {
+      try {
+        const mail = new Mail({
+          status: "pending",
+          order: order._id,
+          user: order.user,
+          subject: "",   // bypassar validation error temporärt
+          content: "",   // hooken skriver över dessa värden ändå
+        });
+        await mail.save();
+        
+      }
+      catch(error){
+        return next(error);
+      }
+  }
   next();
 });
 

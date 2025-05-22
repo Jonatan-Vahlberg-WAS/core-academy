@@ -2,6 +2,7 @@ const Order = require("../../models/Order");
 const OrderFactory = require("../factories/orderFactory");
 const UserFactory = require("../factories/userFactory");
 const CourseFactory = require("../factories/courseFactory");
+const Mail = require("../../models/Mail");
 
 describe("Order Model", () => {
   afterEach(async () => {
@@ -176,3 +177,22 @@ describe("Order Model - Insert Many Hook", () => {
     expect(_orders[0].totalPrice).toBe(courses.reduce((acc, course) => acc + course.price, 0));
   });
 });
+
+describe("Order Model - Mail Hook", () => {
+  it("should create a mail when order is created", async () => {
+    const user = await UserFactory.create();
+    const courses = await CourseFactory.createMany(1);
+
+    const orderData = OrderFactory.generate({
+      user: user._id,
+      courses: courses.map((course) => course._id),
+      status: "pending"
+    });
+
+    const order = await Order.create(orderData);
+
+    const mail = await Mail.findOne({ order: order._id, status: "pending" });
+    expect(mail).not.toBe(null);
+
+  })
+})
